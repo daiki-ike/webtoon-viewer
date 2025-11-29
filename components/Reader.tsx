@@ -11,7 +11,7 @@ interface ReaderProps {
 
 export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
   const [showAssistant, setShowAssistant] = useState(false);
-  const [showControls, setShowControls] = useState(true); // メニューの表示状態
+  const [showControls, setShowControls] = useState(false); // デフォルトで非表示に変更
   const [zoom, setZoom] = useState(1);
   const [isCopied, setIsCopied] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
