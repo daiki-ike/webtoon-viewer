@@ -31,7 +31,7 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
     setShowControls(prev => !prev);
   };
 
-  const isShareable = window.location.search.includes('src=');
+  const isSharedLink = window.location.search.includes('src=');
 
   // コントロール用の共通クラス（アニメーション付き）
   const controlClass = `pointer-events-auto transition-all duration-300 ${
@@ -46,12 +46,14 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
         
         {/* Top Controls Toolbar (Sticky Overlay) */}
         <div className="absolute top-0 left-0 right-0 z-10 p-4 flex justify-between items-start pointer-events-none">
-          {/* Back Button */}
-          <div className={controlClass}>
-            <Button variant="secondary" onClick={(e) => { e.stopPropagation(); onBack(); }} className="shadow-lg backdrop-blur-md bg-gray-900/80">
-              <ChevronLeft className="w-4 h-4 mr-1" /> Library
-            </Button>
-          </div>
+          {/* Back Button - 共有リンクからのアクセス時は非表示 */}
+          {!isSharedLink && (
+            <div className={controlClass}>
+              <Button variant="secondary" onClick={(e) => { e.stopPropagation(); onBack(); }} className="shadow-lg backdrop-blur-md bg-gray-900/80">
+                <ChevronLeft className="w-4 h-4 mr-1" /> Library
+              </Button>
+            </div>
+          )}
 
           {/* Right Controls (Zoom & Share) */}
           <div className={`flex flex-col gap-2 items-end ${controlClass}`}>
@@ -67,7 +69,7 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
                </button>
             </div>
 
-            {isShareable && (
+            {isSharedLink && (
               <Button 
                 variant="secondary"
                 onClick={handleShare}
