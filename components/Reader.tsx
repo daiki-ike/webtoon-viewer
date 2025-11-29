@@ -1,7 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { WebtoonImage } from '../types';
-import { ChevronLeft, MessageSquare, ZoomIn, ZoomOut, Maximize, Share2, Check, RefreshCw, AlertCircle } from 'lucide-react';
-import { GeminiAssistant } from './GeminiAssistant';
+import { ChevronLeft, ZoomIn, ZoomOut, Maximize, Share2, Check, RefreshCw, AlertCircle } from 'lucide-react';
 import { Button } from './Button';
 
 interface ReaderProps {
@@ -10,26 +9,10 @@ interface ReaderProps {
 }
 
 export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
-  const [showAssistant, setShowAssistant] = useState(false);
-  const [showControls, setShowControls] = useState(false); // デフォルトで非表示に変更
+  const [showControls, setShowControls] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [isCopied, setIsCopied] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  
-  // Convert current view to base64 for AI context if needed
-  const [currentBase64, setCurrentBase64] = useState<string | null>(null);
-
-  // Helper to capture base64 of the first image for Gemini
-  useEffect(() => {
-    if (images.length > 0) {
-      const img = images[0];
-      if (img.file) {
-        const reader = new FileReader();
-        reader.onloadend = () => setCurrentBase64(reader.result as string);
-        reader.readAsDataURL(img.file);
-      } 
-    }
-  }, [images]);
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -45,9 +28,7 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
 
   // 画面タップでコントロールの表示/非表示を切り替え
   const handleToggleControls = () => {
-    if (!showAssistant) {
-      setShowControls(prev => !prev);
-    }
+    setShowControls(prev => !prev);
   };
 
   const isShareable = window.location.search.includes('src=');
@@ -55,10 +36,6 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
   // コントロール用の共通クラス（アニメーション付き）
   const controlClass = `pointer-events-auto transition-all duration-300 ${
     showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
-  }`;
-
-  const bottomControlClass = `pointer-events-auto transition-all duration-300 ${
-    showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
   }`;
 
   return (
@@ -102,18 +79,6 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
           </div>
         </div>
 
-        {/* AI Analyze Button (Bottom Right) */}
-        <div className={`absolute bottom-6 right-4 z-10 ${bottomControlClass}`}>
-           <Button 
-              variant="primary" 
-              onClick={(e) => { e.stopPropagation(); setShowAssistant(!showAssistant); }}
-              className="shadow-lg shadow-blue-900/50 pointer-events-auto rounded-full px-6 py-3"
-            >
-              <MessageSquare className="w-5 h-5 mr-2" />
-              AI Analyze
-            </Button>
-        </div>
-
         {/* Scrollable Reader */}
         <div 
           ref={scrollContainerRef}
@@ -141,14 +106,6 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
           </div>
         </div>
       </div>
-
-      {/* AI Side Panel */}
-      {showAssistant && (
-        <GeminiAssistant 
-          currentImageBase64={currentBase64} 
-          onClose={() => setShowAssistant(false)} 
-        />
-      )}
     </div>
   );
 };
