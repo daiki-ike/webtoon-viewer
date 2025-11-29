@@ -11,6 +11,7 @@ interface ReaderProps {
 
 export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
   const [showAssistant, setShowAssistant] = useState(false);
+  const [showControls, setShowControls] = useState(true); // メニューの表示状態
   const [zoom, setZoom] = useState(1);
   const [isCopied, setIsCopied] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -22,25 +23,16 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
   useEffect(() => {
     if (images.length > 0) {
       const img = images[0];
-      
-      // If we have the file object (Upload mode)
       if (img.file) {
         const reader = new FileReader();
-        reader.onloadend = () => {
-          setCurrentBase64(reader.result as string);
-        };
+        reader.onloadend = () => setCurrentBase64(reader.result as string);
         reader.readAsDataURL(img.file);
       } 
-      // If we only have URL (Shared/Hosted mode)
-      else if (img.previewUrl) {
-        // We generally can't fetch generic URLs due to CORS for canvas/analysis unless proxy is used.
-        // But for the reader display, img tag works fine.
-        // AI analysis might fail for external URLs without backend proxy.
-      }
     }
   }, [images]);
 
-  const handleShare = async () => {
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     const url = window.location.href;
     try {
       await navigator.clipboard.writeText(url);
@@ -51,7 +43,18 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
     }
   };
 
+  const handleToggleControls = () => {
+    if (!showAssistant) {
+      setShowControls(prev => !prev);
+    }
+  };
+
   const isShareable = window.location.search.includes('src=');
+
+  // コントロール用の共通クラス（アニメーション付き）
+  const controlClass = `pointer-events-auto transition-all duration-300 ${
+    showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
+  }`;
 
   return (
     <div className="relative h-full w-full flex overflow-hidden">
@@ -59,14 +62,18 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
       {/* Main Content Area */}
       <div className="flex-1 relative flex flex-col h-full bg-black">
         
-        {/* Top Controls Toolbar (Sticky) */}
+        {/* Top Controls Toolbar (Sticky Overlay) */}
         <div className="absolute top-0 left-0 right-0 z-10 p-4 flex justify-between items-start pointer-events-none">
-          <Button variant="secondary" onClick={onBack} className="pointer-events-auto shadow-lg backdrop-blur-md bg-gray-900/80">
-            <ChevronLeft className="w-4 h-4 mr-1" /> Library
-          </Button>
+          {/* Back Button */}
+          <div className={controlClass}>
+            <Button variant="secondary" onClick={(e) => { e.stopPropagation(); onBack(); }} className="shadow-lg backdrop-blur-md bg-gray-900/80">
+              <ChevronLeft className="w-4 h-4 mr-1" /> Library
+            </Button>
+          </div>
 
-          <div className="flex flex-col gap-2 items-end pointer-events-auto">
-            <div className="bg-gray-900/80 backdrop-blur-md rounded-lg p-1 shadow-lg flex flex-col gap-1">
+          {/* Right Controls */}
+          <div className={`flex flex-col gap-2 items-end ${controlClass}`}>
+            <div className="bg-gray-900/80 backdrop-blur-md rounded-lg p-1 shadow-lg flex flex-col gap-1" onClick={e => e.stopPropagation()}>
                <button onClick={() => setZoom(z => Math.min(z + 0.1, 1.5))} className="p-2 hover:bg-white/10 rounded" aria-label="Zoom In">
                  <ZoomIn className="w-5 h-5" />
                </button>
@@ -91,7 +98,7 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
               
               <Button 
                 variant="primary" 
-                onClick={() => setShowAssistant(!showAssistant)}
+                onClick={(e) => { e.stopPropagation(); setShowAssistant(!showAssistant); }}
                 className="shadow-lg shadow-blue-900/50"
               >
                 <MessageSquare className="w-4 h-4 mr-2" />
@@ -104,7 +111,8 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
         {/* Scrollable Reader */}
         <div 
           ref={scrollContainerRef}
-          className="h-full overflow-y-auto no-scrollbar scroll-smooth bg-[#121212]"
+          onClick={handleToggleControls}
+          className="h-full overflow-y-auto no-scrollbar scroll-smooth bg-[#121212] cursor-pointer"
         >
           <div 
             className="mx-auto transition-transform duration-200 origin-top min-h-screen"
@@ -112,7 +120,7 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
               maxWidth: '768px', 
               width: '100%',
               transform: `scale(${zoom})`,
-              marginBottom: '50vh' // Extra space at bottom
+              marginBottom: '50vh'
             }}
           >
             {images.map((img) => (
@@ -148,29 +156,28 @@ const ImageLoader: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
       {status === 'loading' && (
         <div className="absolute inset-0 flex items-center justify-center text-gray-500 gap-2">
           <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm">Loading image...</span>
+          <span className="text-sm">Loading...</span>
         </div>
       )}
       
       {status === 'error' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 gap-2 p-4 text-center border border-gray-800">
           <AlertCircle className="w-8 h-8 text-red-500 mb-2" />
-          <p className="text-sm font-medium text-white">Failed to load image</p>
-          <p className="text-xs break-all opacity-70">{src}</p>
+          <p className="text-sm font-medium text-white">Load Failed</p>
           <Button 
             variant="secondary" 
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               setStatus('loading');
-              // Force reload by appending timestamp
               const newSrc = src.includes('?') ? `${src}&t=${Date.now()}` : `${src}?t=${Date.now()}`;
               const img = new Image();
               img.src = newSrc;
               img.onload = () => setStatus('loaded');
               img.onerror = () => setStatus('error');
             }}
-            className="mt-2"
+            className="mt-2 text-xs"
           >
-            <RefreshCw className="w-4 h-4 mr-2" /> Retry
+            <RefreshCw className="w-3 h-3 mr-1" /> Retry
           </Button>
         </div>
       )}
@@ -181,7 +188,7 @@ const ImageLoader: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
         className={`w-full h-auto block transition-opacity duration-500 ${status === 'loaded' ? 'opacity-100' : 'opacity-0'}`}
         onLoad={() => setStatus('loaded')}
         onError={() => setStatus('error')}
-        loading="eager" // Load immediately since it's the main content
+        loading="eager"
       />
     </div>
   );
