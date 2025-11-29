@@ -1,0 +1,5 @@
+{
+  "name": "Webtoon Reader & AI Analyst",
+  "description": "A specialized viewer for vertical scrolling webcomics (Webtoon style) with Gemini-powered image analysis and translation capabilities.",
+  "requestFramePermissions": []
+}
