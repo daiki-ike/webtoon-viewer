@@ -31,7 +31,7 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
     setShowControls(prev => !prev);
   };
 
-  const isSharedLink = window.location.search.includes('src=');
+  const isAdminMode = window.location.search.includes('admin=true');
 
   // コントロール用の共通クラス（アニメーション付き）
   const controlClass = `pointer-events-auto transition-all duration-300 ${
@@ -46,8 +46,8 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
         
         {/* Top Controls Toolbar (Sticky Overlay) */}
         <div className="absolute top-0 left-0 right-0 z-10 p-4 flex justify-between items-start pointer-events-none">
-          {/* Back Button - 共有リンクからのアクセス時は非表示 */}
-          {!isSharedLink && (
+          {/* Back Button - 管理者モードの場合のみ表示 */}
+          {isAdminMode && (
             <div className={controlClass}>
               <Button variant="secondary" onClick={(e) => { e.stopPropagation(); onBack(); }} className="shadow-lg backdrop-blur-md bg-gray-900/80">
                 <ChevronLeft className="w-4 h-4 mr-1" /> Library
@@ -69,7 +69,7 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
                </button>
             </div>
 
-            {isSharedLink && (
+            {!isAdminMode && (
               <Button 
                 variant="secondary"
                 onClick={handleShare}
