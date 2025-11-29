@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { WebtoonImage } from '../types';
-import { ChevronLeft, MessageSquare, ZoomIn, ZoomOut, Maximize, Share2, Check } from 'lucide-react';
+import { ChevronLeft, MessageSquare, ZoomIn, ZoomOut, Maximize, Share2, Check, RefreshCw, AlertCircle } from 'lucide-react';
 import { GeminiAssistant } from './GeminiAssistant';
 import { Button } from './Button';
 
@@ -33,24 +33,14 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
       } 
       // If we only have URL (Shared/Hosted mode)
       else if (img.previewUrl) {
-        fetch(img.previewUrl)
-          .then(res => res.blob())
-          .then(blob => {
-            const reader = new FileReader();
-            reader.onloadend = () => setCurrentBase64(reader.result as string);
-            reader.readAsDataURL(blob);
-          })
-          .catch(err => {
-            console.error("Failed to fetch image for AI analysis (likely CORS)", err);
-            // Fallback or error handling could go here
-          });
+        // We generally can't fetch generic URLs due to CORS for canvas/analysis unless proxy is used.
+        // But for the reader display, img tag works fine.
+        // AI analysis might fail for external URLs without backend proxy.
       }
     }
   }, [images]);
 
   const handleShare = async () => {
-    // If we are in "URL mode", the URL is already shareable. 
-    // If we are in "Upload mode", we can't share the local file easily.
     const url = window.location.href;
     try {
       await navigator.clipboard.writeText(url);
@@ -117,7 +107,7 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
           className="h-full overflow-y-auto no-scrollbar scroll-smooth bg-[#121212]"
         >
           <div 
-            className="mx-auto transition-transform duration-200 origin-top"
+            className="mx-auto transition-transform duration-200 origin-top min-h-screen"
             style={{ 
               maxWidth: '768px', 
               width: '100%',
@@ -126,14 +116,7 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
             }}
           >
             {images.map((img) => (
-              <img 
-                key={img.id}
-                src={img.previewUrl}
-                alt={img.name}
-                className="w-full h-auto block"
-                // Webtoons must have 0 gap, handled by block display
-                loading="lazy"
-              />
+              <ImageLoader key={img.id} src={img.previewUrl} alt={img.name} />
             ))}
             
             {/* End of Content Marker */}
@@ -152,6 +135,54 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
           onClose={() => setShowAssistant(false)} 
         />
       )}
+    </div>
+  );
+};
+
+// Sub-component to handle individual image loading states
+const ImageLoader: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
+  const [status, setStatus] = useState<'loading' | 'error' | 'loaded'>('loading');
+
+  return (
+    <div className="relative w-full min-h-[300px] bg-gray-900">
+      {status === 'loading' && (
+        <div className="absolute inset-0 flex items-center justify-center text-gray-500 gap-2">
+          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm">Loading image...</span>
+        </div>
+      )}
+      
+      {status === 'error' && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 gap-2 p-4 text-center border border-gray-800">
+          <AlertCircle className="w-8 h-8 text-red-500 mb-2" />
+          <p className="text-sm font-medium text-white">Failed to load image</p>
+          <p className="text-xs break-all opacity-70">{src}</p>
+          <Button 
+            variant="secondary" 
+            onClick={() => {
+              setStatus('loading');
+              // Force reload by appending timestamp
+              const newSrc = src.includes('?') ? `${src}&t=${Date.now()}` : `${src}?t=${Date.now()}`;
+              const img = new Image();
+              img.src = newSrc;
+              img.onload = () => setStatus('loaded');
+              img.onerror = () => setStatus('error');
+            }}
+            className="mt-2"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" /> Retry
+          </Button>
+        </div>
+      )}
+
+      <img 
+        src={src}
+        alt={alt}
+        className={`w-full h-auto block transition-opacity duration-500 ${status === 'loaded' ? 'opacity-100' : 'opacity-0'}`}
+        onLoad={() => setStatus('loaded')}
+        onError={() => setStatus('error')}
+        loading="eager" // Load immediately since it's the main content
+      />
     </div>
   );
 };
