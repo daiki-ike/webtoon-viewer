@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { WebtoonImage } from '../types';
-import { ChevronLeft, ZoomIn, ZoomOut, Maximize, Share2, Check, RefreshCw, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ZoomIn, ZoomOut, Maximize, RefreshCw, AlertCircle } from 'lucide-react';
 import { Button } from './Button';
 
 interface ReaderProps {
@@ -11,20 +11,7 @@ interface ReaderProps {
 export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
   const [showControls, setShowControls] = useState(false);
   const [zoom, setZoom] = useState(1);
-  const [isCopied, setIsCopied] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  const handleShare = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const url = window.location.href;
-    try {
-      await navigator.clipboard.writeText(url);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy', err);
-    }
-  };
 
   // 画面タップでコントロールの表示/非表示を切り替え
   const handleToggleControls = () => {
@@ -55,7 +42,7 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
             </div>
           )}
 
-          {/* Right Controls (Zoom & Share) */}
+          {/* Right Controls (Zoom) */}
           <div className={`flex flex-col gap-2 items-end ${controlClass}`}>
             <div className="bg-gray-900/80 backdrop-blur-md rounded-lg p-1 shadow-lg flex flex-col gap-1 pointer-events-auto" onClick={e => e.stopPropagation()}>
                <button onClick={() => setZoom(z => Math.min(z + 0.1, 1.5))} className="p-2 hover:bg-white/10 rounded" aria-label="Zoom In">
@@ -68,16 +55,6 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
                  <ZoomOut className="w-5 h-5" />
                </button>
             </div>
-
-            {!isAdminMode && (
-              <Button 
-                variant="secondary"
-                onClick={handleShare}
-                className="shadow-lg shadow-blue-900/50 pointer-events-auto"
-              >
-                {isCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-              </Button>
-            )}
           </div>
         </div>
 
