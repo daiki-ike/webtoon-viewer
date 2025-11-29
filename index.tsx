@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Webtoon Viewer</title>
     
+    <!-- Favicon & App Icons -->
+    <link rel="icon" type="image/png" href="/thumbnail.png" />
+    <link rel="apple-touch-icon" href="/thumbnail.png" />
+
     <!-- OGP Settings for Social Media -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Webtoon Viewer" />
