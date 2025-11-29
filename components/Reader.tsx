@@ -43,6 +43,7 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
     }
   };
 
+  // 画面タップでコントロールの表示/非表示を切り替え
   const handleToggleControls = () => {
     if (!showAssistant) {
       setShowControls(prev => !prev);
@@ -54,6 +55,10 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
   // コントロール用の共通クラス（アニメーション付き）
   const controlClass = `pointer-events-auto transition-all duration-300 ${
     showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
+  }`;
+
+  const bottomControlClass = `pointer-events-auto transition-all duration-300 ${
+    showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
   }`;
 
   return (
@@ -71,9 +76,9 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
             </Button>
           </div>
 
-          {/* Right Controls */}
+          {/* Right Controls (Zoom & Share) */}
           <div className={`flex flex-col gap-2 items-end ${controlClass}`}>
-            <div className="bg-gray-900/80 backdrop-blur-md rounded-lg p-1 shadow-lg flex flex-col gap-1" onClick={e => e.stopPropagation()}>
+            <div className="bg-gray-900/80 backdrop-blur-md rounded-lg p-1 shadow-lg flex flex-col gap-1 pointer-events-auto" onClick={e => e.stopPropagation()}>
                <button onClick={() => setZoom(z => Math.min(z + 0.1, 1.5))} className="p-2 hover:bg-white/10 rounded" aria-label="Zoom In">
                  <ZoomIn className="w-5 h-5" />
                </button>
@@ -85,27 +90,28 @@ export const Reader: React.FC<ReaderProps> = ({ images, onBack }) => {
                </button>
             </div>
 
-            <div className="flex gap-2">
-              {isShareable && (
-                <Button 
-                  variant="secondary"
-                  onClick={handleShare}
-                  className="shadow-lg shadow-blue-900/50"
-                >
-                  {isCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-                </Button>
-              )}
-              
+            {isShareable && (
               <Button 
-                variant="primary" 
-                onClick={(e) => { e.stopPropagation(); setShowAssistant(!showAssistant); }}
-                className="shadow-lg shadow-blue-900/50"
+                variant="secondary"
+                onClick={handleShare}
+                className="shadow-lg shadow-blue-900/50 pointer-events-auto"
               >
-                <MessageSquare className="w-4 h-4 mr-2" />
-                AI Analyze
+                {isCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
               </Button>
-            </div>
+            )}
           </div>
+        </div>
+
+        {/* AI Analyze Button (Bottom Right) */}
+        <div className={`absolute bottom-6 right-4 z-10 ${bottomControlClass}`}>
+           <Button 
+              variant="primary" 
+              onClick={(e) => { e.stopPropagation(); setShowAssistant(!showAssistant); }}
+              className="shadow-lg shadow-blue-900/50 pointer-events-auto rounded-full px-6 py-3"
+            >
+              <MessageSquare className="w-5 h-5 mr-2" />
+              AI Analyze
+            </Button>
         </div>
 
         {/* Scrollable Reader */}
